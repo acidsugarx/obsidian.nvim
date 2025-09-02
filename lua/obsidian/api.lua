@@ -594,16 +594,30 @@ end
 ---
 ---@param src string
 ---@return string
-M.resolve_image_path = function(src)
-  local img_folder = Obsidian.opts.attachments.img_folder
+M.resolve_attachment_path = function(src)
+  local attachment_folder = Obsidian.opts.attachments.folder
 
-  ---@cast img_folder -nil
-  if vim.startswith(img_folder, ".") then
+  ---@cast attachment_folder -nil
+  if vim.startswith(attachment_folder, ".") then
     local dirname = Path.new(vim.fs.dirname(vim.api.nvim_buf_get_name(0)))
-    return tostring(dirname / img_folder / src)
+    return tostring(dirname / attachment_folder / src)
   else
-    return tostring(Obsidian.dir / img_folder / src)
+    return tostring(Obsidian.dir / attachment_folder / src)
   end
+end
+
+M.resolve_image_path = M.resolve_attachment_path
+
+local function is_attachment_path(location)
+  local attachment_allowed = false
+  for ext in iter(require("obsidian.attachments").filetypes) do
+    if vim.endswith(location, "." .. ext) then
+      attachment_allowed = true
+      break
+    end
+  end
+
+  return attachment_allowed and not vim.endswith(location, ".md")
 end
 
 --- Follow a link. If the link argument is `nil` we attempt to follow a link under the cursor.
@@ -616,23 +630,12 @@ M.follow_link = function(link, opts)
 
   ---@param res obsidian.ResolveLinkResult
   local function follow_link(res)
-    if res.url ~= nil then
-      Obsidian.opts.follow_url_func(res.url)
-      return
-    end
-
-    if util.is_img(res.location) then
-      local path = Obsidian.dir / res.location
-      Obsidian.opts.follow_img_func(tostring(path))
-      return
-    end
-
     if res.note ~= nil then
       -- Go to resolved note.
       return res.note:open { line = res.line, col = res.col, open_strategy = opts.open_strategy }
-    end
-
-    if
+    elseif res.url or (res.location and is_attachment_path(res.location)) then
+      return Obsidian.opts.attachments.func(res.url or M.resolve_attachment_path(res.location))
+    elseif
       res.link_type == search.RefTypes.Wiki
       or res.link_type == search.RefTypes.WikiWithAlias
       or res.link_type == search.RefTypes.Markdown

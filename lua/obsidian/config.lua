@@ -281,7 +281,7 @@ config.default = {
   ---@class obsidian.config.AttachmentsOpts
   ---
   ---Default folder to save images to, relative to the vault root (/) or current dir (.), see https://github.com/obsidian-nvim/obsidian.nvim/wiki/Images#change-image-save-location
-  ---@field img_folder? string
+  ---@field folder? string
   ---
   ---Default name for pasted images
   ---@field img_name_func? fun(): string
@@ -292,7 +292,8 @@ config.default = {
   ---Whether to confirm the paste or not. Defaults to true.
   ---@field confirm_img_paste? boolean
   attachments = {
-    img_folder = "assets/imgs",
+    func = vim.ui.open,
+    folder = "attachments",
     img_text_func = require("obsidian.builtin").img_text_func,
     img_name_func = function()
       return string.format("Pasted image %s", os.date "%Y%m%d%H%M%S")
@@ -544,6 +545,10 @@ See: https://github.com/obsidian-nvim/obsidian.nvim/wiki/Keymaps]]
     end
     opts.attachments.img_name_func = opts.image_name_func
     opts.image_name_func = nil
+  end
+
+  if opts.attachments and opts.attachments.img_folder then
+    log.warn_once [[The 'attachments.img_folder' is removed, see {{}}]] -- TODO:
   end
 
   if opts.statusline and opts.statusline.enabled then
