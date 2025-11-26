@@ -664,9 +664,10 @@ end
 ---
 ---@field path string|obsidian.Path The path to the note where the backlinks were found.
 ---@field line integer The line number (1-indexed) where the backlink was found.
----@field text string The text of the line where the backlink was found.
 ---@field start integer The start of match (0-indexed)
 ---@field end integer The end of match (0-indexed)
+---@field line_content string The whole line of match
+---@field text string The text of the line where the backlink was found.
 
 ---@param note obsidian.Note
 ---@param callback fun(matches: obsidian.BacklinkMatch[])
@@ -710,12 +711,14 @@ M.find_backlinks_async = function(note, callback, opts)
         end
       end
     end
+    vim.print(match)
     results[#results + 1] = {
       path = path,
       line = match.line_number,
       text = util.rstrip_whitespace(match.lines.text),
       start = match.submatches[1].start,
       ["end"] = match.submatches[1]["end"],
+      line_content = match.lines.text,
     }
   end
   M.search_async(
