@@ -8,7 +8,7 @@ return function(_, handler)
   if link then
     local loc = util.parse_link(link, { strip = true })
     assert(loc, "wrong link format")
-    placeholder = loc
+    placeholder = loc:gsub(".md", "") -- HACK: properly remove file extension?
   else
     local note = api.current_note(0)
     assert(note, "not in a obsidian note")
